@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau Desktop · Quiz de repaso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16232B;
+    --ink-soft:#2A3A42;
+    --canvas:#EEF2F0;
+    --card:#FFFFFF;
+    --grid:#D9E1DE;
+    --grid-strong:#C3CDC9;
+    --teal:#1D7A70;
+    --teal-dark:#155F58;
+    --teal-bg:#E4F1EE;
+    --amber:#C97F1E;
+    --amber-bg:#FBF0DD;
+    --green:#2F8F5B;
+    --green-bg:#E7F3EC;
+    --coral:#C0503A;
+    --coral-bg:#FBEAE6;
+    --muted:#5B6B70;
+    --font-display:'Fraunces', serif;
+    --font-body:'IBM Plex Sans', -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono', 'Courier New', monospace;
+    --header-h:86px;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--canvas);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.5;
+    padding-bottom:96px;
+  }
+  h1,h2,h3{font-family:var(--font-display); margin:0;}
+  a{color:inherit;}
+  .mono{font-family:var(--font-mono);}
+
+  /* ---------- Header ---------- */
+  .app-header{
+    position:sticky; top:0; z-index:20;
+    background:var(--ink);
+    color:#EAF1EE;
+  }
+  .header-inner{
+    max-width:1180px; margin:0 auto;
+    padding:16px 20px 14px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+    flex-wrap:wrap;
+  }
+  .brand-eyebrow{
+    display:block; font-family:var(--font-mono); font-size:.7rem;
+    letter-spacing:.14em; color:#8FB9B2; margin-bottom:4px;
+  }
+  .app-header h1{font-size:1.35rem; font-weight:600; color:#fff;}
+  .header-stats{
+    display:flex; align-items:baseline; gap:8px;
+    font-size:.85rem; color:#B9C7C4; white-space:nowrap;
+  }
+  #answeredCount{font-size:1rem; color:#fff;}
+  .header-progress{height:4px; background:#243740;}
+  .header-progress-fill{height:100%; width:0%; background:var(--amber); transition:width .35s ease;}
+
+  /* ---------- Layout ---------- */
+  .layout{max-width:1180px; margin:0 auto; display:block;}
+  .lesson-nav{
+    position:sticky; top:var(--header-h); z-index:15;
+    display:flex; gap:8px; overflow-x:auto;
+    padding:10px 20px; background:var(--canvas);
+    border-bottom:1px solid var(--grid);
+    scrollbar-width:thin;
+  }
+  .nav-item{
+    flex:0 0 auto;
+    display:flex; align-items:center; gap:6px;
+    background:var(--card); border:1px solid var(--grid);
+    border-radius:999px; padding:6px 12px 6px 8px;
+    font-family:var(--font-body); font-size:.78rem; color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .nav-item .nav-num{
+    font-family:var(--font-mono); font-size:.72rem; color:var(--teal);
+    background:var(--teal-bg); border-radius:50%; width:20px; height:20px;
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  .nav-item .nav-name{display:none;}
+  .nav-item .nav-dot{
+    width:7px; height:7px; border-radius:50%; background:var(--grid-strong); flex:0 0 auto;
+  }
+  .nav-item.is-complete .nav-dot{background:var(--teal);}
+  .nav-item:focus-visible, .btn:focus-visible, input:focus-visible{
+    outline:2px solid var(--teal); outline-offset:2px;
+  }
+
+  .quiz-main{padding:20px 20px 40px;}
+
+  .intro-card{
+    background:var(--card); border:1px solid var(--grid); border-radius:var(--radius);
+    padding:20px 22px; margin-bottom:22px;
+  }
+  .intro-eyebrow{
+    font-family:var(--font-mono); font-size:.72rem; letter-spacing:.1em;
+    color:var(--teal); text-transform:uppercase; margin:0 0 6px;
+  }
+  .intro-card h2{font-size:1.25rem; margin-bottom:8px;}
+  .intro-card p{color:var(--ink-soft); font-size:.92rem; margin:0;}
+  .intro-card strong{color:var(--ink);}
+
+  /* ---------- Lesson sections ---------- */
+  .lesson-section{margin-bottom:30px; scroll-margin-top:calc(var(--header-h) + 56px);}
+  .lesson-heading{
+    display:flex; align-items:baseline; gap:10px; margin-bottom:12px;
+  }
+  .lesson-heading .lesson-index{
+    font-family:var(--font-mono); font-size:.85rem; color:var(--teal);
+  }
+  .lesson-heading h2{font-size:1.1rem; font-weight:600;}
+
+  .question-card{
+    background:var(--card); border:1px solid var(--grid); border-radius:var(--radius);
+    padding:18px 18px 16px; margin-bottom:14px;
+    border-left:4px solid var(--grid-strong);
+    transition:border-color .25s ease, background .25s ease;
+  }
+  .question-top{display:flex; align-items:flex-start; gap:10px; margin-bottom:10px;}
+  .q-label{
+    font-family:var(--font-mono); font-size:.78rem; color:var(--teal);
+    background:var(--teal-bg); border-radius:6px; padding:2px 7px;
+    flex:0 0 auto; margin-top:2px;
+  }
+  .q-prompt{font-size:.97rem; color:var(--ink); font-weight:500;}
+  .q-badge{
+    display:inline-block; font-family:var(--font-mono); font-size:.68rem;
+    color:var(--amber); background:var(--amber-bg); border-radius:6px;
+    padding:2px 7px; margin-left:8px; vertical-align:middle;
+  }
+
+  .options{display:flex; flex-direction:column; gap:6px; margin-top:8px;}
+  .option{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:9px 10px; border-radius:8px; border:1px solid transparent;
+    cursor:pointer; font-size:.9rem; color:var(--ink-soft);
+  }
+  .option:hover{background:var(--canvas);}
+  .option input{margin-top:3px; accent-color:var(--teal); flex:0 0 auto;}
+  .option .opt-letter{
+    font-family:var(--font-mono); font-size:.78rem; color:var(--muted);
+    flex:0 0 auto; width:16px;
+  }
+
+  .result-strip{
+    display:none; align-items:center; gap:8px; margin-top:12px;
+    font-family:var(--font-mono); font-size:.78rem; padding:7px 10px; border-radius:8px;
+  }
+  .explanation{
+    display:none; margin-top:8px; padding:10px 12px; border-radius:8px;
+    background:var(--canvas); font-size:.85rem; color:var(--ink-soft);
+    border-left:3px solid var(--grid-strong);
+  }
+  .explanation strong{color:var(--ink);}
+
+  .question-card.correct{border-left-color:var(--green);}
+  .question-card.incorrect{border-left-color:var(--coral);}
+  .question-card.unanswered{border-left-color:var(--muted);}
+  .question-card.correct .result-strip{display:flex; background:var(--green-bg); color:var(--teal-dark);}
+  .question-card.incorrect .result-strip{display:flex; background:var(--coral-bg); color:var(--coral);}
+  .question-card.unanswered .result-strip{display:flex; background:var(--canvas); color:var(--muted);}
+  .question-card.submitted .explanation{display:block;}
+  .question-card.submitted .option{cursor:default;}
+  .question-card.submitted .option.was-correct{background:var(--green-bg);}
+  .question-card.submitted .option.was-wrong{background:var(--coral-bg);}
+
+  /* ---------- Results hero ---------- */
+  .results-card{
+    background:var(--ink); color:#EAF1EE; border-radius:var(--radius);
+    padding:26px 24px; margin-bottom:26px;
+  }
+  .results-top{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:18px;}
+  .results-eyebrow{font-family:var(--font-mono); font-size:.72rem; letter-spacing:.1em; color:#8FB9B2; text-transform:uppercase;}
+  .results-score{font-family:var(--font-display); font-size:2.6rem; font-weight:600; line-height:1;}
+  .results-score span{font-size:1.2rem; color:#B9C7C4; font-family:var(--font-mono); font-weight:400;}
+  .results-verdict{
+    font-family:var(--font-body); font-weight:600; font-size:1rem;
+    padding:8px 14px; border-radius:8px;
+  }
+  .results-verdict.pass{background:var(--green-bg); color:var(--teal-dark);}
+  .results-verdict.fail{background:var(--coral-bg); color:#7A3226;}
+
+  .gauge{margin-top:6px;}
+  .gauge-track{
+    position:relative; height:14px; background:#243740; border-radius:999px;
+    margin:34px 4px 10px;
+  }
+  .gauge-fill{
+    position:absolute; top:0; left:0; bottom:0; width:0%;
+    border-radius:999px; background:var(--amber);
+    transition:width 1s cubic-bezier(.16,1,.3,1);
+  }
+  .gauge-fill.pass{background:var(--green);}
+  .gauge-fill.fail{background:var(--coral);}
+  .gauge-threshold{
+    position:absolute; top:-24px; bottom:-4px; left:48%;
+    width:0; border-left:2px dashed #8FB9B2;
+  }
+  .gauge-threshold-label{
+    position:absolute; top:-22px; left:0; transform:translateX(-50%);
+    font-family:var(--font-mono); font-size:.68rem; color:#8FB9B2; white-space:nowrap;
+  }
+  .gauge-marker{
+    position:absolute; top:50%; left:0%; width:16px; height:16px;
+    background:#fff; border:3px solid var(--ink); border-radius:50%;
+    transform:translate(-50%,-50%); transition:left 1s cubic-bezier(.16,1,.3,1);
+  }
+  .gauge-marker-label{
+    position:absolute; bottom:16px; left:0%; transform:translateX(-50%);
+    font-family:var(--font-mono); font-size:.72rem; color:#fff;
+    background:var(--ink-soft); padding:1px 6px; border-radius:5px;
+    transition:left 1s cubic-bezier(.16,1,.3,1); white-space:nowrap;
+  }
+  .gauge-axis{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:.68rem; color:#8FB9B2; margin:0 4px;}
+  .results-note{font-size:.86rem; color:#B9C7C4; margin-top:16px;}
+
+  /* ---------- Sticky action bar ---------- */
+  .action-bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:25;
+    background:var(--ink); border-top:1px solid #243740;
+  }
+  .action-bar-inner{
+    max-width:1180px; margin:0 auto; padding:12px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+  }
+  #actionStatus{color:#B9C7C4; font-size:.8rem;}
+  .action-buttons{display:flex; gap:10px;}
+  .btn{
+    font-family:var(--font-body); font-weight:600; font-size:.88rem;
+    border-radius:8px; padding:10px 18px; border:1px solid transparent; cursor:pointer;
+  }
+  .btn-primary{background:var(--teal); color:#fff;}
+  .btn-primary:hover{background:var(--teal-dark);}
+  .btn-ghost{background:transparent; color:#EAF1EE; border-color:#3B4E56;}
+  .btn-ghost:hover{border-color:#8FB9B2;}
+
+  /* ---------- Desktop layout ---------- */
+  @media (min-width:900px){
+    :root{--header-h:96px;}
+    .header-inner{padding:20px 32px 16px;}
+    .app-header h1{font-size:1.6rem;}
+    .layout{display:grid; grid-template-columns:230px 1fr; gap:28px; align-items:start;}
+    .lesson-nav{
+      position:sticky; top:calc(var(--header-h) + 22px);
+      flex-direction:column; overflow-x:visible;
+      border-bottom:none; padding:0; margin-top:22px;
+      max-height:calc(100vh - var(--header-h) - 50px); overflow-y:auto;
+    }
+    .nav-item{border-radius:8px; padding:8px 10px; width:100%;}
+    .nav-item .nav-name{display:inline;}
+    .quiz-main{padding:22px 32px 60px 0;}
+    .intro-card{padding:26px 30px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; scroll-behavior:auto !important;}
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-eyebrow">TABLEAU DESKTOP</span>
+      <h1>Quiz de repaso</h1>
+    </div>
+    <div class="header-stats">
+      <span id="answeredCount" class="mono">0/38</span>
+      <span>respondidas</span>
+    </div>
+  </div>
+  <div class="header-progress"><div id="headerProgressFill" class="header-progress-fill"></div></div>
+</header>
+
+<div class="layout">
+  <nav id="lessonNav" class="lesson-nav" aria-label="Navegación de lecciones"></nav>
+
+  <main class="quiz-main">
+    <section class="intro-card">
+      <p class="intro-eyebrow">Instrucciones</p>
+      <h2>38 preguntas · 14 lecciones</h2>
+      <p>Responde cada pregunta y presiona <strong>Enviar respuestas</strong> al final para ver tu puntaje y la explicación de cada una. Se necesita al menos <strong>48%</strong> de respuestas correctas para aprobar.</p>
+    </section>
+
+    <section id="resultsCard" class="results-card" hidden>
+      <div class="results-top">
+        <div>
+          <p class="results-eyebrow">Resultado</p>
+          <div class="results-score" id="resultsScore">0<span>/38</span></div>
+        </div>
+        <div id="resultsVerdict" class="results-verdict">—</div>
+      </div>
+      <div class="gauge">
+        <div class="gauge-track">
+          <div id="gaugeFill" class="gauge-fill"></div>
+          <div class="gauge-threshold"><span class="gauge-threshold-label">48% para aprobar</span></div>
+          <div id="gaugeMarkerLabel" class="gauge-marker-label">0%</div>
+          <div id="gaugeMarker" class="gauge-marker"></div>
+        </div>
+        <div class="gauge-axis"><span>0%</span><span>50%</span><span>100%</span></div>
+      </div>
+      <p class="results-note">Revisa cada pregunta abajo: se marcó en verde lo correcto y en coral lo incorrecto, junto con la explicación.</p>
+    </section>
+
+    <div id="lessonsContainer"></div>
+  </main>
+</div>
+
+<div class="action-bar">
+  <div class="action-bar-inner">
+    <span id="actionStatus" class="mono">0/38 respondidas</span>
+    <div class="action-buttons">
+      <button id="submitBtn" class="btn btn-primary">Enviar respuestas</button>
+      <button id="resetBtn" class="btn btn-ghost" hidden>Reiniciar quiz</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const QUIZ = [
+    { lesson:"Lección 1", questions:[
+      { label:"Q1", type:"single", prompt:"What part of a Tableau workbook allows you to view and drag fields to the Rows and Columns shelves?",
+        options:["The Start page","The Data pane","The Connect panel","The Data Source page"], correct:[1],
+        explanation:"While your data may be visible in several places in your workbook, the Data pane, located on worksheets in the Tableau workspace, is where you view and interact with fields." },
+      { label:"Q2", type:"single", prompt:"You want to securely share a data visualization you created. Only your team should be able to see your analysis, which displays data that is added daily. Which Tableau tool would be the best option for you to use?",
+        options:["Publish it to Tableau Public","Email the team every day with a new packaged workbook to open with Tableau Desktop","Publish it to your team's project on Tableau Cloud","Output the data as a local file using Tableau Prep Builder"], correct:[2],
+        explanation:"Tableau Cloud (and Tableau Server) is a secure solution for authoring, sharing, distributing, and collaborating on content created in Tableau." }
+    ]},
+    { lesson:"Lección 2", questions:[
+      { label:"Q1", type:"single", prompt:"Which one of the following steps is required before you create visualizations with your data?",
+        options:["Explore a dashboard","Preview your data","Connect to a data source","Add a field to the Marks card"], correct:[2],
+        explanation:"While it can be helpful in some cases to explore a dashboard, preview your data, or even publish your data, these steps are not required to create visualizations. To create a visualization, you must first connect to a data source." },
+      { label:"Q2", type:"single", prompt:"Which of the following actions will change the visualization represented on a worksheet?",
+        options:["Dragging and dropping a field to the Marks card","Double-clicking a field in the Data Pane","Selecting a chart option from the Show Me menu","A and C","All of the above"], correct:[4],
+        explanation:"The visualization represented on a worksheet will be impacted by using any of the listed actions." }
+    ]},
+    { lesson:"Lección 3", questions:[
+      { label:"Q1a", type:"single", prompt:"Classify the field — Donation Type (Values: Cash, Goods, Services)",
+        options:["Dimension","Measure"], correct:[0],
+        explanation:"This categorical text would most likely be used to add detail to a view." },
+      { label:"Q1b", type:"single", prompt:"Classify the field — Patient Wait Time (mins) (Values: 2, 5, 20)",
+        options:["Dimension","Measure"], correct:[1],
+        explanation:"It's common to explore a sum, avg, min or max value for elapsed time." },
+      { label:"Q1c", type:"single", prompt:"Classify the field — Employee ID (Values: 1294, 2385, 2305)",
+        options:["Dimension","Measure"], correct:[0],
+        explanation:"While these values are numeric, it would be more common to use Employee ID to add detail, rather than to perform a measurement like summing up or averaging." },
+      { label:"Q1d", type:"single", prompt:"Classify the field — Donation Amount (Values: $10, $45, $65)",
+        options:["Dimension","Measure"], correct:[1],
+        explanation:"Dollar amounts are quantitative values, which are commonly aggregated." },
+      { label:"Q1e", type:"single", prompt:"Classify the field — Date of Hire (Values: Jan. 18, 2016, Jun. 4, 2021)",
+        options:["Dimension","Measure"], correct:[0],
+        explanation:"Dates are qualitative values used to segment data." },
+      { label:"Q1f", type:"single", prompt:"Classify the field — Home City (Values: San Francisco, Seattle, London)",
+        options:["Dimension","Measure"], correct:[0],
+        explanation:"Locations are qualitative values used to segment data." },
+      { label:"Q2", type:"single", prompt:"Which components does a Tableau Packaged Workbook (.twbx) file contain?",
+        options:["Local data files","Worksheets","Dashboards","B and C only","All of the above"], correct:[4],
+        explanation:"A packaged workbook is a single zip file that contains a workbook along with any supporting local background images and custom geocoding." }
+    ]},
+    { lesson:"Lección 4", questions:[
+      { label:"Q1", type:"single", prompt:"You have many employees on your team. You want to show data for only the employees who have accumulated 25,000 or more points on your internal learning portal. Which measure filter type is the best choice?",
+        options:["At least","At most","Range of values","Special"], correct:[0],
+        explanation:"Select the At least option to include all values that are greater than or equal to a specified minimum value." },
+      { label:"Q2", type:"single", prompt:"Your company's QA team wants to see bugs logged in the last 30 days. Which date filter type will most effectively display this data?",
+        options:["Starting date","Ending date","Range of dates","Relative dates"], correct:[3],
+        explanation:"The Relative dates filter enables you to view data dynamically based on the current date, such as the last 30 days." },
+      { label:"Q3", type:"multi", prompt:"You are creating a view which compares sales of vehicle types. You want the top selling vehicle type to be listed first, followed by the next-best selling, and so on. The top selling vehicles will vary month-to-month and by location. You want the sort order to update based on the data. Which of the following actions will achieve the desired results?",
+        options:["In the view, drag and drop the vehicle names into the desired order","In the view, click the sort icon on the vehicle sales axis","On the Vehicle Type dimension field, use the Sort menu to Sort By > Field: Vehicle Sales","On the Vehicle Sales measure field, use the Sort menu to Sort By > Field: Vehicle Sales"], correct:[1,2],
+        explanation:"The two correct options will sort the members of the Vehicle Type dimension based on the sum of Vehicle Sales, ensuring the order updates as data changes." }
+    ]},
+    { lesson:"Lección 5", questions:[
+      { label:"Q1", type:"single", prompt:"Groups can be created directly from the view and from what other location?",
+        options:["Data pane","Analytics tab","Marks card","Filters shelf"], correct:[0],
+        explanation:"You can create a group from a field in the Data pane by right-clicking it and selecting Create > Group." },
+      { label:"Q2", type:"multi", prompt:"Which of the following are TRUE about groups in Tableau?",
+        options:["In the Data pane, groups are indicated with an equal sign (=).","Groups provide the ability to combine multiple members of the same dimension into higher-level categories as part of a new field.","A new group can be created from a previously grouped field.","Groups are dynamic so their definitions will automatically adjust to reflect changes in data."], correct:[1,2],
+        explanation:"If new dimension members are added to the data, you need to edit the group to adjust group members. In the Data pane, groups are indicated with a paperclip icon." },
+      { label:"Q3", type:"single", prompt:"You have created a hierarchy in the Data pane, but some of the fields are in the wrong order. What can you do to reorder the fields?",
+        options:["Filter the fields in the hierarchy","Group the fields in the hierarchy","Drag the fields into the proper order in the Data pane","Drag the fields into the proper order onto a shelf in the view"], correct:[2],
+        explanation:"You can reorder the fields in a hierarchy simply by dragging them up or down directly within the Data pane." }
+    ]},
+    { lesson:"Lección 6", questions:[
+      { label:"Q1", type:"single", prompt:"How do you add totals to a crosstab?",
+        options:["Click the Analysis menu, point to Totals, and click Show Row Grand Totals. Repeat for additional totals.","Open the Analytics pane. Click and hold Totals to drag to the view, then drop on to the icon for Column Grand Totals. Repeat for additional totals.","Open the Analytics pane. Double-click Totals to add all relevant totals and subtotals.","All of the above"], correct:[3],
+        explanation:"All three of the methods listed will add totals to a view. In Tableau, many methods often achieve the same result." },
+      { label:"Q2", type:"single", prompt:"You are editing this view and you want the colored shading to fill the background cells in the highlight table. What action should you take to achieve this result?",
+        options:["Change the worksheet background color using shading format options","Change the text color using font format options","On the Marks card, change the mark type from Automatic (text) to Square","On the Marks card, move the SUM(Marketing) field from Color to Detail"], correct:[2],
+        explanation:"A typical highlight table requires that you select Square as the mark type and place a continuous measure on the Color shelf." }
+    ]},
+    { lesson:"Lección 7", questions:[
+      { label:"Q1", type:"single", prompt:"You have four years' worth of sales transactions data. Which of the following would you use to show a timeline of sales at the yearly level, from the first year of data through the last year of data?",
+        options:["The discrete Year date part","The discrete Month date part","The continuous Year date value","The Exact Date"], correct:[2],
+        explanation:"Continuous date values represent the chronological progression of time. When you drag a date value into the view, Tableau creates a continuous timeline along an axis, from the first year to the last." },
+      { label:"Q2", type:"single", prompt:"You want to compare days of the week to determine which day of the week is most popular for customers to contact support, with days displayed as Sunday, Monday, and so on. When configuring your date field, which of the following would be the best choice?",
+        options:["Day date part","Weekday date part","Day date value","Exact Date"], correct:[1],
+        explanation:"When you drag a date part field onto a shelf, it aggregates data by that specific part of the date (like Weekday), grouping all instances of that part together regardless of the year or month." },
+      { label:"Q3", type:"single", prompt:"A field in Tableau with the Date or Date & Time data type is a:",
+        options:["Dimension","Measure"], correct:[0],
+        explanation:"Date fields in Tableau are qualitative values used to segment data, making them dimensions." }
+    ]},
+    { lesson:"Lección 8", questions:[
+      { label:"Q1", type:"single", prompt:"What is the Measure Values field?",
+        options:["It is a measure containing the values for the measures.","It is a calculation which averages all of the values in the measures.","It is a dimension containing the measure names.","It is a filter for the measures in the view."], correct:[0],
+        explanation:"The Measure Values field is a generated measure that contains all the quantitative values for the measures in your view." },
+      { label:"Q2", type:"single", prompt:"What is the Measure Names field?",
+        options:["It is a measure containing the values for the measures.","It is an option for formatting the titles in a view.","It is a dimension containing the measure names.","It is a filter for the dimensions in the view."], correct:[2],
+        explanation:"The Measure Names field is a generated dimension that contains the names of all the measures in your data source." },
+      { label:"Q3", type:"single", prompt:"Under what circumstance should you synchronize the axes in a dual axis chart?",
+        options:["Synchronize the axes every time a dual axis view is created.","Axes should never be synchronized when using a dual axis view.","Synchronize the axes only when a combined axis and dual axis view are used together.","A dual axis view should be synchronized (or not) depending on the data in the view."], correct:[3],
+        explanation:"The Synchronize Axis option helps ensure that you make a scaled and correct comparison. It's recommended to synchronize axes when the units of measure are the same on both axes (like Actual Spend vs Budget Spend)." }
+    ]},
+    { lesson:"Lección 9", questions:[
+      { label:"Q1", type:"single", prompt:"What data characteristics is a scatter plot useful to identify?",
+        options:["Clusters, correlations, and outliers","Causation, clusters, and outliers","Causation only","Outliers only"], correct:[0],
+        explanation:"Scatter plots help identify correlations between variables. But it's important to remember that correlation does not equal causation. Scatter plots are also useful to identify outliers, or clusters." },
+      { label:"Q2", type:"single", prompt:"You have a bar chart that displays sales data for four different regions. You want to add analytics to display how each region's sales compares to the median of total sales. You want this overall median to recalculate dynamically when your data changes. Which analytics element would be the best choice to achieve this result?",
+        options:["Constant line","Reference line","Reference band","Distribution Band"], correct:[1],
+        explanation:"A reference line can be configured to show the median across the regions (the table), and it will recalculate dynamically when your data changes. A constant line can be set manually but won't update." },
+      { label:"Q3", type:"single", prompt:"After adding two measures to a scatter plot, the marks are scattered around the view with no clear pattern. Which of the following is most likely indicated?",
+        options:["There is a positive correlation between the measures.","There is a negative correlation between the measures.","There is little to no correlation between the measures.","There is clear causation between the measures."], correct:[2],
+        explanation:"Even when there is little correlation between measures, scatterplots can be useful to review patterns or clusters, especially in dense datasets." }
+    ]},
+    { lesson:"Lección 10", questions:[
+      { label:"Q1", type:"single", prompt:"To center a map to a specific geographic area so that it does not shift when data changes, which button on the Tableau Desktop View toolbar do you click?",
+        options:["Pan","Fix Map (toggles from Reset Map)","Rectangle Selection","Zoom Area"], correct:[1],
+        explanation:"The pushpin icon on the map toolbar can be clicked to either fix the map's current center and zoom level or reset it." },
+      { label:"Q2", type:"single", prompt:"You build a map in Tableau Desktop using a field in your data called Customer City. You notice that several unknown values are indicated. You investigate and see “Paris”, “Springfield” and “Alexandria” on the list, and you recognize that each of these cities could reference a location in a different state or country. Which is the best action to resolve the issue?",
+        options:["Filter unknown values.","Show data at the default position.","Manually edit values to provide a specific latitude and longitude for each unknown city.","Add Customer State and Customer Country to the worksheet's detail."], correct:[3],
+        explanation:"Each option may help you address unknown map values. However, if a location is ambiguous, it is best to provide additional location hierarchy information (like state and country) to determine a single point to plot the data." }
+    ]},
+    { lesson:"Lección 11", questions:[
+      { label:"Q1", type:"single", prompt:"Which of the following scenarios requires a calculated field?",
+        options:["You want to sort the values in an existing field in your data.","You want to display an existing field in your data in color within a visualization.","You want to combine two existing fields in your data to create a new field.","You want to hide an existing field from your data."], correct:[2],
+        explanation:"Calculated fields allow you to create new data from data that already exists in your data source." },
+      { label:"Q2", type:"single", prompt:"If you create a calculated field with the formula SUM([Billable Hours]) / SUM([Hours Available]), how will Tableau perform the aggregation for the calculation?",
+        options:["Tableau will sum the Billable Hours and Hours Available values separately for the level of detail in the view and then divide these totals.","Tableau will divide Billable Hours and Hours Available at the row level first and then sum the ratios for the level in the view.","Either A or B, depending on whether the number format has been set to %.","None of the above"], correct:[0],
+        explanation:"By using the SUM aggregation inside the calculation, Tableau will aggregate the measures before dividing them." }
+    ]},
+    { lesson:"Lección 12", questions:[
+      { label:"Q1", type:"single", prompt:"Which built-in table calculation should you use if you want to see sales for three years displayed on a timeline with each month's sales added to all previous months' sales?",
+        options:["Percent Difference","Rank","Running Total","Year Over Year Growth"], correct:[2],
+        explanation:"A Running Total table calculation aggregates values cumulatively in a view." },
+      { label:"Q2", type:"single", prompt:"A Percent of Total calculation shows orders broken down by Category and Sub-Category across 4 years of data. Which scope and direction option results in 100% grand totals shown in the bottom row, but not 100% subtotals?",
+        options:["Table (down)","Table (across)","Pane (down)","Pane (across)"], correct:[0],
+        explanation:"In this view, calculating the percent of total using Table (down) shows the amount that each subcategory contributed to the total sales of all subcategories in a given year." }
+    ]},
+    { lesson:"Lección 13", questions:[
+      { label:"Q1", type:"single", prompt:"Which of the following statements are TRUE when selecting whether to use a pie chart to show breakdowns of a whole?",
+        options:["Pie charts work best to display 2 - 5 slices. Too many categories can be difficult to interpret effectively.","Pie charts should be used only when the data adds up to 100% and when only positive numbers are included.","Marks (or Pie slices) should be labeled directly, when possible. The use of external legends should be limited.","All of the above are true."], correct:[3],
+        explanation:"Each chart type has its own strengths and weaknesses. If chart types are used well, people will understand the data better. All of these statements reflect recommendations for considering whether a pie chart is the most effective choice for your data." },
+      { label:"Q2", type:"single", prompt:"What is an effective use of a tree map?",
+        options:["To show a part-to-whole relationship for a large number of related categories.","To demonstrate a part-to-whole relationship for hierarchical data.","To draw focus to categories which contribute a relatively large portion to the whole.","All of the above"], correct:[3],
+        explanation:"All of these statements reflect recommendations for considering whether a tree map is the most effective choice for your data." }
+    ]},
+    { lesson:"Lección 14", questions:[
+      { label:"Q1", type:"single", prompt:"You created a dashboard with three worksheets that use the same data source. You want to apply an existing filter to all the views in the dashboard. Which option should you select?",
+        options:["Only This Worksheet","Selected Worksheets","All Using This Data Source","All Using Related Data Sources"], correct:[2],
+        explanation:"This applies the filter to all worksheets in the dashboard (and the entire workbook) that use the same data source." },
+      { label:"Q2", type:"single", prompt:"Which dashboard action allows you to call attention to marks of interest by retaining color for specific marks and dimming all others?",
+        options:["Filter","Highlight","Go to Sheet","Go to URL"], correct:[1],
+        explanation:"Highlight actions allow you to focus on select members in a view and dim all others. Unlike filters, they do not remove the surrounding data." }
+    ]}
+  ];
+
+  // ---- Flatten with global ids ----
+  let gid = 0;
+  QUIZ.forEach(section => {
+    section.questions.forEach(q => { gid += 1; q.id = gid; });
+  });
+  const TOTAL = gid;
+  const FLAT = QUIZ.flatMap(s => s.questions);
+  const answers = {}; // id -> number (single) or Set (multi)
+
+  const lessonsContainer = document.getElementById("lessonsContainer");
+  const lessonNav = document.getElementById("lessonNav");
+  const answeredCountEl = document.getElementById("answeredCount");
+  const headerProgressFill = document.getElementById("headerProgressFill");
+  const actionStatus = document.getElementById("actionStatus");
+  const submitBtn = document.getElementById("submitBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const resultsCard = document.getElementById("resultsCard");
+  const resultsScore = document.getElementById("resultsScore");
+  const resultsVerdict = document.getElementById("resultsVerdict");
+  const gaugeFill = document.getElementById("gaugeFill");
+  const gaugeMarker = document.getElementById("gaugeMarker");
+  const gaugeMarkerLabel = document.getElementById("gaugeMarkerLabel");
+
+  function letterFor(i){ return String.fromCharCode(65 + i); }
+
+  function buildNav(){
+    QUIZ.forEach((section, si) => {
+      const num = String(si + 1).padStart(2, "0");
+      const btn = document.createElement("button");
+      btn.className = "nav-item";
+      btn.id = "navitem-" + (si + 1);
+      btn.type = "button";
+      btn.title = section.lesson;
+      btn.innerHTML =
+        '<span class="nav-num">' + num + '</span>' +
+        '<span class="nav-name">' + section.lesson + '</span>' +
+        '<span class="nav-dot"></span>';
+      btn.addEventListener("click", () => {
+        document.getElementById("lesson-" + (si + 1)).scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      lessonNav.appendChild(btn);
+    });
+  }
+
+  function buildQuestions(){
+    QUIZ.forEach((section, si) => {
+      const sec = document.createElement("section");
+      sec.className = "lesson-section";
+      sec.id = "lesson-" + (si + 1);
+
+      const heading = document.createElement("div");
+      heading.className = "lesson-heading";
+      heading.innerHTML =
+        '<span class="lesson-index mono">' + String(si + 1).padStart(2, "0") + '</span>' +
+        '<h2>' + section.lesson + '</h2>';
+      sec.appendChild(heading);
+
+      section.questions.forEach(q => {
+        const card = document.createElement("article");
+        card.className = "question-card";
+        card.id = "qcard-" + q.id;
+
+        const top = document.createElement("div");
+        top.className = "question-top";
+        const badge = q.type === "multi"
+          ? '<span class="q-badge">Selecciona ' + q.correct.length + '</span>'
+          : "";
+        top.innerHTML =
+          '<span class="q-label">' + q.label + '</span>' +
+          '<span class="q-prompt">' + q.prompt + badge + '</span>';
+        card.appendChild(top);
+
+        const opts = document.createElement("div");
+        opts.className = "options";
+        q.options.forEach((optText, idx) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          const input = document.createElement("input");
+          input.type = q.type === "multi" ? "checkbox" : "radio";
+          input.name = "q-" + q.id;
+          input.dataset.qid = q.id;
+          input.dataset.idx = idx;
+
+          input.addEventListener("change", () => handleAnswerChange(q));
+
+          const letter = document.createElement("span");
+          letter.className = "opt-letter mono";
+          letter.textContent = letterFor(idx);
+
+          const text = document.createElement("span");
+          text.textContent = optText;
+
+          label.appendChild(input);
+          label.appendChild(letter);
+          label.appendChild(text);
+          opts.appendChild(label);
+        });
+        card.appendChild(opts);
+
+        const strip = document.createElement("div");
+        strip.className = "result-strip mono";
+        strip.id = "strip-" + q.id;
+        card.appendChild(strip);
+
+        const expl = document.createElement("div");
+        expl.className = "explanation";
+        expl.id = "expl-" + q.id;
+        expl.innerHTML = "<strong>Explicación:</strong> " + q.explanation;
+        card.appendChild(expl);
+
+        sec.appendChild(card);
+      });
+
+      lessonsContainer.appendChild(sec);
+    });
+  }
+
+  function handleAnswerChange(q){
+    if (q.type === "multi"){
+      const checked = Array.from(document.querySelectorAll('input[data-qid="' + q.id + '"]'))
+        .filter(i => i.checked).map(i => parseInt(i.dataset.idx, 10));
+      if (checked.length > 0) answers[q.id] = new Set(checked);
+      else delete answers[q.id];
+    } else {
+      const checked = document.querySelector('input[data-qid="' + q.id + '"]:checked');
+      if (checked) answers[q.id] = parseInt(checked.dataset.idx, 10);
+      else delete answers[q.id];
+    }
+    updateProgress();
+  }
+
+  function isLessonComplete(section){
+    return section.questions.every(q => answers.hasOwnProperty(q.id));
+  }
+
+  function updateProgress(){
+    const answeredCount = Object.keys(answers).length;
+    answeredCountEl.textContent = answeredCount + "/" + TOTAL;
+    actionStatus.textContent = answeredCount + "/" + TOTAL + " respondidas";
+    headerProgressFill.style.width = ((answeredCount / TOTAL) * 100) + "%";
+    QUIZ.forEach((section, si) => {
+      const navItem = document.getElementById("navitem-" + (si + 1));
+      navItem.classList.toggle("is-complete", isLessonComplete(section));
+    });
+  }
+
+  function isCorrect(q){
+    if (!answers.hasOwnProperty(q.id)) return false;
+    if (q.type === "multi"){
+      const sel = answers[q.id];
+      if (sel.size !== q.correct.length) return false;
+      return q.correct.every(idx => sel.has(idx));
+    }
+    return answers[q.id] === q.correct[0];
+  }
+
+  function gradeQuiz(){
+    let correctCount = 0;
+
+    FLAT.forEach(q => {
+      const card = document.getElementById("qcard-" + q.id);
+      const strip = document.getElementById("strip-" + q.id);
+      const inputs = document.querySelectorAll('input[data-qid="' + q.id + '"]');
+      inputs.forEach(i => { i.disabled = true; });
+
+      const answered = answers.hasOwnProperty(q.id);
+      const correct = isCorrect(q);
+      if (correct) correctCount += 1;
+
+      card.classList.add("submitted");
+      card.classList.remove("correct", "incorrect", "unanswered");
+
+      const correctLetters = q.correct.map(letterFor).join(", ");
+
+      inputs.forEach(i => {
+        const idx = parseInt(i.dataset.idx, 10);
+        const label = i.closest(".option");
+        if (q.correct.includes(idx)) label.classList.add("was-correct");
+        else if (i.checked) label.classList.add("was-wrong");
+      });
+
+      if (!answered){
+        card.classList.add("unanswered");
+        strip.textContent = "— Sin responder · Respuesta correcta: " + correctLetters;
+      } else if (correct){
+        card.classList.add("correct");
+        strip.textContent = "✓ Correcta";
+      } else {
+        card.classList.add("incorrect");
+        strip.textContent = "✕ Incorrecta · Respuesta correcta: " + correctLetters;
+      }
+    });
+
+    const percent = Math.round((correctCount / TOTAL) * 100);
+    const pass = percent >= 48;
+
+    resultsCard.hidden = false;
+    resultsScore.innerHTML = correctCount + '<span>/' + TOTAL + ' · ' + percent + '%</span>';
+    resultsVerdict.textContent = pass ? "Aprobado" : "No aprobado";
+    resultsVerdict.className = "results-verdict " + (pass ? "pass" : "fail");
+    gaugeFill.className = "gauge-fill " + (pass ? "pass" : "fail");
+
+    requestAnimationFrame(() => {
+      gaugeFill.style.width = percent + "%";
+      gaugeMarker.style.left = percent + "%";
+      gaugeMarkerLabel.style.left = percent + "%";
+      gaugeMarkerLabel.textContent = percent + "%";
+    });
+
+    submitBtn.hidden = true;
+    resetBtn.hidden = false;
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function resetQuiz(){
+    Object.keys(answers).forEach(k => delete answers[k]);
+
+    FLAT.forEach(q => {
+      const card = document.getElementById("qcard-" + q.id);
+      const strip = document.getElementById("strip-" + q.id);
+      card.classList.remove("submitted", "correct", "incorrect", "unanswered");
+      strip.textContent = "";
+      const inputs = document.querySelectorAll('input[data-qid="' + q.id + '"]');
+      inputs.forEach(i => {
+        i.checked = false;
+        i.disabled = false;
+        i.closest(".option").classList.remove("was-correct", "was-wrong");
+      });
+    });
+
+    resultsCard.hidden = true;
+    gaugeFill.style.width = "0%";
+    gaugeMarker.style.left = "0%";
+    gaugeMarkerLabel.style.left = "0%";
+
+    submitBtn.hidden = false;
+    resetBtn.hidden = true;
+
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  submitBtn.addEventListener("click", gradeQuiz);
+  resetBtn.addEventListener("click", resetQuiz);
+
+  buildNav();
+  buildQuestions();
+  updateProgress();
+})();
+</script>
+</body>
+</html>
